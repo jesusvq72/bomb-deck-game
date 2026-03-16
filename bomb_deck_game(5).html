@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bomb Deck</title>
+  <style>
+    :root{
+      --bg:#0d111c;
+      --bg-warm-1: rgba(126,163,255,.18);
+      --bg-warm-2: rgba(160,125,255,.14);
+      --bg-red-1: rgba(255,90,110,.00);
+      --bg-red-2: rgba(255,40,70,.00);
+      --panel:#171d30;
+      --text:#eef2ff;
+      --muted:#b8c3e1;
+      --accent:#7ea3ff;
+      --accent2:#a07dff;
+      --success:#69e3a3;
+      --danger:#ff6b81;
+      --warn:#ffd166;
+      --border:rgba(255,255,255,.10);
+      --shadow:0 18px 40px rgba(0,0,0,.32);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left, var(--bg-warm-1), transparent 35%),
+        radial-gradient(circle at bottom right, var(--bg-warm-2), transparent 32%),
+        radial-gradient(circle at 20% 80%, var(--bg-red-1), transparent 36%),
+        radial-gradient(circle at 80% 20%, var(--bg-red-2), transparent 34%),
+        var(--bg);
+      transition: background 900ms ease, background-color 900ms ease;
+    }
+    .wrap{max-width:1280px;margin:0 auto;padding:24px}
+    h1{margin:0 0 8px;font-size:clamp(2rem,2.8vw,3rem);line-height:1.05}
+    .sub{color:var(--muted);margin-bottom:22px;line-height:1.5}
+    .grid{display:grid;grid-template-columns:390px 1fr;gap:24px;align-items:start}
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(8px);
+    }
+    h2{margin:0 0 14px;font-size:1.08rem}
+    .field{margin-bottom:16px}
+    .label-row{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px}
+    .label-row label{font-weight:700}
+    .value{font-size:.95rem;color:var(--muted);min-width:84px;text-align:right}
+    input[type="range"]{width:100%;accent-color:var(--accent);cursor:pointer}
+    button{
+      border:none;border-radius:14px;padding:12px 14px;font-weight:800;font-size:.95rem;
+      cursor:pointer;transition:transform .12s ease, filter .12s ease;
+    }
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(1px) scale(.99)}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+    .btn-danger{background:#4a2230;color:#ffd7df}
+    .stats{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px
+    }
+    .stat{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;text-align:center;
+    }
+    .stat .k{font-size:.84rem;color:var(--muted);margin-bottom:4px}
+    .stat .v{font-size:1.2rem;font-weight:900}
+    .play-area{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 300px;
+      gap:16px;
+      align-items:start;
+    }
+    .main-play{display:grid;gap:16px}
+    .side-play{display:grid;gap:16px}
+    .utility-panel{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px 16px;
+    }
+    .utility-panel h3{margin:0 0 10px;font-size:1rem}
+    .utility-controls{display:grid;gap:10px}
+    .utility-controls input{
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background:#202846;
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      font:inherit;
+    }
+    .utility-buttons{display:flex;flex-wrap:wrap;gap:8px}
+    .utility-frame-wrap{
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:14px;
+      overflow:hidden;
+      background:#0f1424;
+    }
+    .utility-frame{
+      width:100%;
+      height:420px;
+      border:none;
+      background:white;
+    }
+    .tiny-note{
+      font-size:.82rem;
+      color:var(--muted);
+      line-height:1.4;
+      margin-top:8px;
+    }
+    .progress-shell{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:18px;padding:14px 16px;
+    }
+    .progress-bar{
+      height:12px;border-radius:999px;background:#2a3458;overflow:hidden;margin-top:10px
+    }
+    .progress-fill{
+      display:block;height:100%;width:0%;
+      background:linear-gradient(90deg,var(--accent),var(--accent2));
+      border-radius:999px;transition:width .3s ease;
+    }
+    .arena{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:24px;padding:24px;
+    }
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(220px,280px));
+      justify-content:center;
+      gap:20px;
+      min-height:280px;
+      align-items:center;
+    }
+    .card{
+      aspect-ratio:3/4;
+      border-radius:22px;
+      position:relative;
+      perspective:1000px;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .24s ease, box-shadow .24s ease, outline-color .24s ease, opacity .24s ease;
+      outline:3px solid transparent;
+      outline-offset:4px;
+    }
+    .card.disabled{cursor:default;opacity:.88}
+    .card.chosen{
+      transform:scale(1.045);
+      outline-color:rgba(255, 209, 102, .92);
+      box-shadow:0 0 0 6px rgba(255, 209, 102, .15), 0 18px 34px rgba(0,0,0,.34);
+      z-index:2;
+    }
+    .card.not-chosen{
+      transform:scale(.975);
+      opacity:.9;
+    }
+    .card-inner{
+      position:absolute;inset:0;
+      transform-style:preserve-3d;
+      transition:transform .7s cubic-bezier(.2,.7,.2,1);
+    }
+    .card.flipped .card-inner{transform:rotateY(180deg)}
+    .face{
+      position:absolute;inset:0;border-radius:22px;
+      backface-visibility:hidden;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:0 12px 28px rgba(0,0,0,.28);
+    }
+    .back{
+      background:
+        linear-gradient(135deg, rgba(126,163,255,.28), rgba(160,125,255,.22)),
+        linear-gradient(180deg,#202846,#141a2e);
+      display:grid;place-items:center;
+    }
+    .back::before{
+      content:"";
+      position:absolute;inset:16px;border-radius:18px;
+      border:2px solid rgba(255,255,255,.14);
+    }
+    .back .deck-title{
+      font-size:1.35rem;font-weight:1000;letter-spacing:.08em;text-transform:uppercase;
+      text-shadow:0 3px 12px rgba(0,0,0,.35);
+    }
+    .front{
+      transform:rotateY(180deg);
+      display:grid;grid-template-rows:auto 1fr auto;
+      padding:18px;
+    }
+    .front.safe{background:linear-gradient(180deg,#1f4d3d,#103126)}
+    .front.bomb{background:linear-gradient(180deg,#692735,#3a111a)}
+    .front.plus{background:linear-gradient(180deg,#6a5420,#32280f)}
+    .front.up{background:linear-gradient(180deg,#5a2b58,#241125)}
+    .front.down{background:linear-gradient(180deg,#23564f,#102825)}
+    .front.double{background:linear-gradient(180deg,#43509a,#1a2148)}
+    .front.guard{background:linear-gradient(180deg,#20624f,#103228)}
+    .front.chaos{background:linear-gradient(180deg,#5b3f90,#24173e)}
+    .front.skip{background:linear-gradient(180deg,#445b1f,#1f2c0f)}
+    .front.fake{background:linear-gradient(180deg,#6a2736,#33131b)}
+    .front.ramp{background:linear-gradient(180deg,#4f285e,#201028)}
+    .emoji{font-size:2.2rem}
+    .type{font-weight:1000;font-size:1.25rem;margin-top:8px}
+    .desc{align-self:center;font-size:1rem;line-height:1.4;color:#f3f6ff}
+    .small-note{font-size:.88rem;color:#d5defc}
+    .picked-badge, .other-badge{
+      position:absolute;top:12px;right:12px;
+      padding:7px 10px;border-radius:999px;font-size:.8rem;font-weight:900;letter-spacing:.04em
+    }
+    .picked-badge{background:rgba(255,255,255,.18)}
+    .other-badge{background:rgba(0,0,0,.24)}
+    .message{
+      min-height:78px;
+      border-radius:18px;
+      padding:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      line-height:1.5;
+    }
+    .message strong.success{color:var(--success)}
+    .message strong.fail{color:#ffb9c5}
+    .message strong.warn{color:var(--warn)}
+    .log{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:18px;padding:14px 16px;
+    }
+    .log h3{margin:0 0 10px;font-size:1rem}
+    .log-list{display:grid;gap:8px;max-height:240px;overflow:auto}
+    .log-item{
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;padding:10px 12px;font-size:.92rem;line-height:1.45
+    }
+    .modifier-panel{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius:18px;padding:14px 16px;
+    }
+    .modifier-panel h3{margin:0 0 10px;font-size:1rem}
+    .modifier-list{display:flex;flex-wrap:wrap;gap:8px}
+    .pill{
+      display:inline-block;padding:7px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
+      font-size:.84rem;font-weight:800
+    }
+    .pill.good{background:rgba(105,227,163,.12);border-color:rgba(105,227,163,.25)}
+    .pill.bad{background:rgba(255,107,129,.12);border-color:rgba(255,107,129,.22)}
+    .pill.neutral{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.22)}
+    .muted{color:var(--muted)}
+    .overlay{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      padding:20px;background:rgba(6,8,15,.65);backdrop-filter:blur(6px);z-index:30;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(94vw,620px);
+      background:linear-gradient(180deg, rgba(24,30,50,.98), rgba(16,20,34,.98));
+      border:1px solid var(--border);
+      border-radius:24px;padding:24px;box-shadow:var(--shadow);text-align:center;
+    }
+    .modal h3{margin:0 0 12px;font-size:2.5rem;letter-spacing:.04em}
+    .modal p{color:var(--muted);line-height:1.5}
+    .footer-note{margin-top:10px;color:var(--muted);font-size:.9rem;line-height:1.45}
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .play-area{grid-template-columns:1fr}
+    }
+    @media (max-width:700px){
+      .cards{grid-template-columns:1fr}
+      .stats{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Bomb Deck</h1>
+    <div class="sub">
+      Pick between two hidden tiles each round. Both reveal after your choice. Survive until you complete the required number of safe reveals — unless the deck stretches the game, worsens the odds, or drops a bomb on you first.
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Game Settings</h2>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="requiredInput">Starting Required Reveals</label>
+            <div class="value"><span id="requiredValue">10</span></div>
+          </div>
+          <input id="requiredInput" type="range" min="3" max="40" step="1" value="10" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="bombInput">Base Bomb Chance</label>
+            <div class="value"><span id="bombValue">7.0</span>%</div>
+          </div>
+          <input id="bombInput" type="range" min="1" max="25" step="0.5" value="7" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="negativeModifierInput">Negative Modifier Frequency</label>
+            <div class="value"><span id="negativeModifierValue">32</span>%</div>
+          </div>
+          <input id="negativeModifierInput" type="range" min="0" max="80" step="1" value="32" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="positiveModifierInput">Positive Modifier Frequency</label>
+            <div class="value"><span id="positiveModifierValue">10</span>%</div>
+          </div>
+          <input id="positiveModifierInput" type="range" min="0" max="60" step="1" value="10" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="maxPlusInput">Maximum +Tiles Size</label>
+            <div class="value">+<span id="maxPlusValue">5</span></div>
+          </div>
+          <input id="maxPlusInput" type="range" min="2" max="10" step="1" value="5" />
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="bombDeltaInput">Bomb Modifier Size</label>
+            <div class="value"><span id="bombDeltaValue">2.0</span>%</div>
+          </div>
+          <input id="bombDeltaInput" type="range" min="0.5" max="8" step="0.5" value="2" />
+        </div>
+
+        <div class="hint">
+          The modifier cards are always part of the game. Use the two modifier sliders to control how often harmful vs helpful effects appear.
+        </div>
+
+        <div class="toolbar">
+          <button id="startBtn" class="btn-primary">Start / Restart</button>
+          <button id="resetStatsBtn" class="btn-danger">Reset Local Stats</button>
+        </div>
+        <div class="footer-note">
+          Local stats are stored in your browser only. Refreshes and restarts can be tracked on this device/browser, but not across other devices.
+        </div>
+      </section>
+
+      <section class="play-area">
+        <div class="main-play">
+          <div class="stats">
+            <div class="stat">
+              <div class="k">Progress</div>
+              <div class="v" id="progressStat">0 / 10</div>
+            </div>
+            <div class="stat">
+              <div class="k">Bomb Chance</div>
+              <div class="v" id="bombStat">7.0%</div>
+            </div>
+            <div class="stat">
+              <div class="k">Guardians</div>
+              <div class="v" id="guardianStat">0</div>
+            </div>
+            <div class="stat">
+              <div class="k">Visits / Plays</div>
+              <div class="v" id="visitPlayStat">0 / 0</div>
+            </div>
+          </div>
+
+          <section class="progress-shell panel">
+            <div><strong>Reveal Goal</strong> <span class="muted">— survive until your completed reveals reach the current target.</span></div>
+            <div class="progress-bar"><span id="progressFill" class="progress-fill"></span></div>
+          </section>
+
+          <section class="arena panel">
+            <div class="cards">
+              <div class="card" id="card0" tabindex="0" aria-label="Left tile">
+                <div class="card-inner">
+                  <div class="face back"><div class="deck-title">Bomb Deck</div></div>
+                  <div class="face front safe" id="card0Front"></div>
+                </div>
+              </div>
+              <div class="card" id="card1" tabindex="0" aria-label="Right tile">
+                <div class="card-inner">
+                  <div class="face back"><div class="deck-title">Bomb Deck</div></div>
+                  <div class="face front safe" id="card1Front"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="message" class="message panel">
+            Press <strong>Start / Restart</strong>, then pick one of the two tiles each round.
+          </section>
+
+          <section class="log panel">
+            <h3>Round Log</h3>
+            <div id="logList" class="log-list"></div>
+          </section>
+        </div>
+
+        <div class="side-play">
+          <section class="modifier-panel panel">
+            <h3>Accumulated Modifiers This Game</h3>
+            <div id="modifierList" class="modifier-list">
+              <span class="muted">No active or collected modifiers yet.</span>
+            </div>
+          </section>
+
+          <section class="utility-panel panel">
+            <h3>Mini Browser Test</h3>
+            <div class="utility-controls">
+              <input id="siteInput" type="text" placeholder="Enter a full URL like https://example.com" />
+              <div class="utility-buttons">
+                <button id="loadSiteBtn" class="btn-primary" type="button">Load Site</button>
+                <button id="clearSiteBtn" class="btn-danger" type="button">Clear</button>
+              </div>
+              <div class="utility-buttons">
+                <button class="btn-secondary preset-site-btn" data-url="https://example.com" type="button">Example</button>
+                <button class="btn-secondary preset-site-btn" data-url="https://www.wikipedia.org" type="button">Wikipedia</button>
+                <button class="btn-secondary preset-site-btn" data-url="https://www.openstreetmap.org" type="button">OpenStreetMap</button>
+              </div>
+            </div>
+            <div class="utility-frame-wrap">
+              <iframe id="siteFrame" class="utility-frame" title="Embedded site test" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
+            </div>
+            <div class="tiny-note">
+              Some websites will refuse to open inside this window because they block embedding. If that happens, try another site.
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="modal">
+      <h3 id="modalTitle">Game Over</h3>
+      <p id="modalText">The deck got you.</p>
+      <button id="closeModalBtn" class="btn-primary">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const requiredInput = document.getElementById('requiredInput');
+    const bombInput = document.getElementById('bombInput');
+    const negativeModifierInput = document.getElementById('negativeModifierInput');
+    const positiveModifierInput = document.getElementById('positiveModifierInput');
+    const maxPlusInput = document.getElementById('maxPlusInput');
+    const bombDeltaInput = document.getElementById('bombDeltaInput');
+
+    const requiredValue = document.getElementById('requiredValue');
+    const bombValue = document.getElementById('bombValue');
+    const negativeModifierValue = document.getElementById('negativeModifierValue');
+    const positiveModifierValue = document.getElementById('positiveModifierValue');
+    const maxPlusValue = document.getElementById('maxPlusValue');
+    const bombDeltaValue = document.getElementById('bombDeltaValue');
+
+    const startBtn = document.getElementById('startBtn');
+    const resetStatsBtn = document.getElementById('resetStatsBtn');
+
+    const progressStat = document.getElementById('progressStat');
+    const bombStat = document.getElementById('bombStat');
+    const guardianStat = document.getElementById('guardianStat');
+    const visitPlayStat = document.getElementById('visitPlayStat');
+    const progressFill = document.getElementById('progressFill');
+    const message = document.getElementById('message');
+    const logList = document.getElementById('logList');
+    const modifierList = document.getElementById('modifierList');
+
+    const cardEls = [document.getElementById('card0'), document.getElementById('card1')];
+    const frontEls = [document.getElementById('card0Front'), document.getElementById('card1Front')];
+
+    const overlay = document.getElementById('overlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalText = document.getElementById('modalText');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const siteInput = document.getElementById('siteInput');
+    const loadSiteBtn = document.getElementById('loadSiteBtn');
+    const clearSiteBtn = document.getElementById('clearSiteBtn');
+    const siteFrame = document.getElementById('siteFrame');
+    const presetSiteBtns = document.querySelectorAll('.preset-site-btn');
+
+    let settings = {};
+    let state = {};
+    let currentCards = [];
+    let roundActive = false;
+    let roundResolved = false;
+    let roundNumber = 0;
+    let visits = 0;
+    let plays = 0;
+    let autoNextTimer = null;
+let negativeHeat = 0;
+
+    function setBackgroundTension() {
+      const root = document.documentElement;
+      const baseRequired = Math.max(1, state.baseRequired || parseInt(requiredInput.value, 10) || 10);
+      const progressRatio = clamp((state.progress || 0) / baseRequired, 0, 1);
+      const roundRatio = clamp((roundNumber || 0) / Math.max(baseRequired, 1), 0, 1);
+      const bombRatio = clamp((state.bombChance || parseFloat(bombInput.value) || 7) / 25, 0, 1);
+      const heat = clamp(progressRatio * 0.5 + roundRatio * 0.2 + bombRatio * 0.15 + negativeHeat * 0.15, 0, 1);
+
+      const blueR = Math.round(13 + (30 * heat));
+      const blueG = Math.round(17 + (5 * heat));
+      const blueB = Math.round(28 - (6 * heat));
+      root.style.setProperty('--bg', `rgb(${blueR}, ${blueG}, ${blueB})`);
+      root.style.setProperty('--bg-warm-1', `rgba(${126 + Math.round(50*heat)}, ${163 - Math.round(85*heat)}, ${255 - Math.round(165*heat)}, ${0.18 + 0.10*heat})`);
+      root.style.setProperty('--bg-warm-2', `rgba(${160 + Math.round(55*heat)}, ${125 - Math.round(75*heat)}, ${255 - Math.round(185*heat)}, ${0.14 + 0.12*heat})`);
+      root.style.setProperty('--bg-red-1', `rgba(255, ${90 - Math.round(35*heat)}, ${110 - Math.round(45*heat)}, ${0.08 + 0.30*heat})`);
+      root.style.setProperty('--bg-red-2', `rgba(255, ${40 + Math.round(10*heat)}, ${70 - Math.round(30*heat)}, ${0.04 + 0.36*heat})`);
+    }
+
+
+    function clamp(n, min, max) { return Math.min(Math.max(n, min), max); }
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function updateReadouts() {
+      requiredValue.textContent = requiredInput.value;
+      bombValue.textContent = Number(bombInput.value).toFixed(1);
+      negativeModifierValue.textContent = negativeModifierInput.value;
+      positiveModifierValue.textContent = positiveModifierInput.value;
+      maxPlusValue.textContent = maxPlusInput.value;
+      bombDeltaValue.textContent = Number(bombDeltaInput.value).toFixed(1);
+    }
+
+    function loadSettings() {
+      settings = {
+        required: parseInt(requiredInput.value, 10),
+        bombChance: parseFloat(bombInput.value),
+        negativeModifierChance: parseFloat(negativeModifierInput.value),
+        positiveModifierChance: parseFloat(positiveModifierInput.value),
+        maxPlus: parseInt(maxPlusInput.value, 10),
+        bombDelta: parseFloat(bombDeltaInput.value)
+      };
+    }
+
+    function normalizeUrl(url) {
+      const trimmed = url.trim();
+      if (!trimmed) return '';
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return 'https://' + trimmed;
+    }
+
+    function loadEmbeddedSite(url) {
+      const normalized = normalizeUrl(url);
+      if (!normalized) return;
+      siteInput.value = normalized;
+      siteFrame.src = normalized;
+    }
+
+    function clearEmbeddedSite() {
+      siteFrame.removeAttribute('src');
+      siteInput.value = '';
+    }
+
+    function loadCounters() {
+      visits = parseInt(localStorage.getItem('bombDeck_visits') || '0', 10) || 0;
+      plays = parseInt(localStorage.getItem('bombDeck_plays') || '0', 10) || 0;
+    }
+
+    function saveCounters() {
+      localStorage.setItem('bombDeck_visits', String(visits));
+      localStorage.setItem('bombDeck_plays', String(plays));
+    }
+
+    function updateCountersDisplay() {
+      visitPlayStat.textContent = `${visits} / ${plays}`;
+    }
+
+    function resetLocalStats() {
+      localStorage.removeItem('bombDeck_visits');
+      localStorage.removeItem('bombDeck_plays');
+      visits = 0;
+      plays = 0;
+      saveCounters();
+      updateCountersDisplay();
+      addLog('Local visit/play stats were reset.');
+    }
+
+    function addLog(text) {
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = text;
+      logList.prepend(item);
+    }
+
+    function clearLog() {
+      logList.innerHTML = '';
+    }
+
+    function setMessage(html) {
+      message.innerHTML = html;
+    }
+
+    function showModal(title, text) {
+      modalTitle.textContent = title;
+      modalText.textContent = text;
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function updateModifierPanel() {
+      if (!state.modifierHistory || state.modifierHistory.length === 0) {
+        modifierList.innerHTML = '<span class="muted">No active or collected modifiers yet.</span>';
+        return;
+      }
+      modifierList.innerHTML = '';
+      state.modifierHistory.forEach(item => {
+        const pill = document.createElement('span');
+        pill.className = `pill ${item.kind}`;
+        pill.textContent = item.label;
+        modifierList.appendChild(pill);
+      });
+    }
+
+    function addModifierRecord(label, kind='neutral') {
+      state.modifierHistory.push({label, kind});
+      updateModifierPanel();
+    }
+
+    function updateStats() {
+      progressStat.textContent = `${state.progress} / ${state.required}`;
+      bombStat.textContent = `${state.bombChance.toFixed(1)}%`;
+      guardianStat.textContent = String(state.guardians);
+      updateCountersDisplay();
+      const pct = state.required > 0 ? clamp((state.progress / state.required) * 100, 0, 100) : 0;
+      progressFill.style.width = `${pct}%`;
+      updateModifierPanel();
+      setBackgroundTension();
+    }
+
+    function makeCardFace(card, index, chosenIndex) {
+      const classes = {
+        safe: 'safe',
+        bomb: 'bomb',
+        plus: 'plus',
+        bombUp: 'up',
+        bombDown: 'down',
+        doubleFlip: 'double',
+        guardian: 'guard',
+        chaos: 'chaos',
+        skip: 'skip',
+        fakeBomb: 'fake',
+        doomRamp: 'ramp'
+      };
+      frontEls[index].className = `face front ${classes[card.type] || 'safe'}`;
+      const badge = index === chosenIndex
+        ? '<div class="picked-badge">YOUR PICK</div>'
+        : '<div class="other-badge">OTHER TILE</div>';
+      frontEls[index].innerHTML = `
+        ${badge}
+        <div class="emoji">${card.emoji}</div>
+        <div class="type">${card.title}</div>
+        <div class="desc">${card.desc}</div>
+        <div class="small-note">${card.note || ''}</div>
+      `;
+    }
+
+    function resetCardsVisuals() {
+      cardEls.forEach((cardEl, idx) => {
+        cardEl.classList.remove('flipped', 'disabled', 'chosen', 'not-chosen');
+        frontEls[idx].className = 'face front safe';
+        frontEls[idx].innerHTML = '';
+      });
+    }
+
+    function enableCardPicking(enable) {
+      cardEls.forEach(el => {
+        if (enable) el.classList.remove('disabled');
+        else el.classList.add('disabled');
+      });
+    }
+
+    function positiveFactories() {
+      return [
+        () => ({
+          type: 'bombDown',
+          emoji: '📉',
+          title: 'Lucky Break',
+          desc: `Bomb chance decreases by ${settings.bombDelta.toFixed(1)}%.`,
+          note: 'A brief bit of mercy.',
+          apply() {
+            state.bombChance = clamp(state.bombChance - settings.bombDelta, 0.5, 95);
+            addModifierRecord(`Lucky Break -${settings.bombDelta.toFixed(1)}% bomb`, 'good');
+            negativeHeat = clamp(negativeHeat - 0.08, 0, 1);
+            return `Bomb chance decreased to ${state.bombChance.toFixed(1)}%.`;
+          }
+        }),
+        () => ({
+          type: 'doubleFlip',
+          emoji: '🔁',
+          title: 'Double Flip',
+          desc: 'Counts as one extra safe reveal immediately.',
+          note: 'The deck rushes you forward.',
+          apply() {
+            state.progress += 1;
+            addModifierRecord('Double Flip +1 progress', 'good');
+            negativeHeat = clamp(negativeHeat - 0.05, 0, 1);
+            return 'Double Flip granted +1 extra progress.';
+          }
+        }),
+        () => ({
+          type: 'guardian',
+          emoji: '🪶',
+          title: 'Guardian',
+          desc: 'Gain one bomb protection charge.',
+          note: 'The next bomb can be ignored.',
+          apply() {
+            state.guardians += 1;
+            addModifierRecord('Guardian gained', 'good');
+            negativeHeat = clamp(negativeHeat - 0.07, 0, 1);
+            return `Guardian gained. Total guardians: ${state.guardians}.`;
+          }
+        }),
+        () => ({
+          type: 'skip',
+          emoji: '⏭️',
+          title: 'Skip Ahead',
+          desc: 'Counts as +1 safe reveal.',
+          note: 'A small jump forward.',
+          apply() {
+            state.progress += 1;
+            addModifierRecord('Skip Ahead +1 progress', 'good');
+            negativeHeat = clamp(negativeHeat - 0.05, 0, 1);
+            return 'Skip Ahead granted +1 progress.';
+          }
+        })
+      ];
+    }
+
+    function negativeFactories() {
+      return [
+        () => {
+          const options = [2, 3, 5, settings.maxPlus];
+          const filtered = [...new Set(options.filter(n => n <= settings.maxPlus))];
+          const amt = choice(filtered);
+          return {
+            type: 'plus',
+            emoji: '⏳',
+            title: `+${amt} Reveals`,
+            desc: `Safe, but your target increases by ${amt}.`,
+            note: 'The deck just got longer.',
+            apply() {
+              state.required += amt;
+              addModifierRecord(`+${amt} reveals added`, 'bad');
+              negativeHeat = clamp(negativeHeat + 0.12, 0, 1);
+              return `Target increased by ${amt}.`;
+            }
+          };
+        },
+        () => ({
+          type: 'bombUp',
+          emoji: '📈',
+          title: 'Danger Rising',
+          desc: `Bomb chance increases by ${settings.bombDelta.toFixed(1)}%.`,
+          note: 'The odds turn darker.',
+          apply() {
+            state.bombChance = clamp(state.bombChance + settings.bombDelta, 0.5, 95);
+            addModifierRecord(`Danger Rising +${settings.bombDelta.toFixed(1)}% bomb`, 'bad');
+            negativeHeat = clamp(negativeHeat + 0.14, 0, 1);
+            return `Bomb chance increased to ${state.bombChance.toFixed(1)}%.`;
+          }
+        }),
+        () => ({
+          type: 'chaos',
+          emoji: '🎲',
+          title: 'Chaos',
+          desc: 'Bomb chance is re-rolled randomly.',
+          note: 'Nobody knows what comes next.',
+          apply() {
+            state.bombChance = Number(rand(1, 18).toFixed(1));
+            addModifierRecord(`Chaos reroll → ${state.bombChance.toFixed(1)}%`, 'neutral');
+            negativeHeat = clamp(negativeHeat + 0.08, 0, 1);
+            return `Bomb chance rerolled to ${state.bombChance.toFixed(1)}%.`;
+          }
+        }),
+        () => ({
+          type: 'fakeBomb',
+          emoji: '💥',
+          title: 'Mini Bomb',
+          desc: 'Collect 3 Mini Bombs and they detonate into an instant loss.',
+          note: 'Do not collect 3.',
+          apply() {
+            state.miniBombs += 1;
+            addModifierRecord(`Mini Bomb ${state.miniBombs}/3`, 'bad');
+            negativeHeat = clamp(negativeHeat + 0.18, 0, 1);
+            if (state.miniBombs >= 3) {
+              state.pendingMiniBombExplosion = true;
+              return 'Mini Bomb counter reached 3/3. Detonation triggered.';
+            }
+            return `Mini Bomb collected: ${state.miniBombs}/3.`;
+          }
+        }),
+        () => ({
+          type: 'doomRamp',
+          emoji: '🌒',
+          title: 'Doom Approaches',
+          desc: 'From now on, bomb chance rises by 1% each round.',
+          note: 'The deck begins to tighten.',
+          apply() {
+            state.doomRampActive = true;
+            addModifierRecord('Doom Escalation active', 'bad');
+            negativeHeat = clamp(negativeHeat + 0.16, 0, 1);
+            return 'Doom Escalation activated: +1% bomb chance each round.';
+          }
+        })
+      ];
+    }
+
+    function createBombCard() {
+      return {
+        type: 'bomb',
+        emoji: '💣',
+        title: 'Bomb',
+        desc: 'Instant loss unless a Guardian saves you.',
+        note: 'The run ends here.',
+        apply() { return 'Bomb triggered.'; }
+      };
+    }
+
+    function createSafeCard() {
+      return {
+        type: 'safe',
+        emoji: '🟩',
+        title: 'Safe',
+        desc: 'Nothing happens. You just survive this reveal.',
+        note: 'A quiet breath.',
+        apply() { return 'Safe tile.'; }
+      };
+    }
+
+    function rollCard() {
+      if (Math.random() * 100 < state.bombChance) return createBombCard();
+
+      const negRoll = Math.random() * 100;
+      const posRoll = Math.random() * 100;
+
+      if (negRoll < settings.negativeModifierChance) {
+        return choice(negativeFactories())();
+      }
+      if (posRoll < settings.positiveModifierChance) {
+        return choice(positiveFactories())();
+      }
+      return createSafeCard();
+    }
+
+    function dealRound() {
+      clearTimeout(autoNextTimer);
+      currentCards = [rollCard(), rollCard()];
+      roundActive = true;
+      roundResolved = false;
+      roundNumber += 1;
+      resetCardsVisuals();
+      enableCardPicking(true);
+      setMessage(`<strong class="warn">Round ${roundNumber}</strong> — choose one tile. Both will reveal after your pick.`);
+      setBackgroundTension();
+    }
+
+    function startGame() {
+      clearTimeout(autoNextTimer);
+      loadSettings();
+      closeModal();
+      plays += 1;
+      saveCounters();
+
+      state = {
+        progress: 0,
+        required: settings.required,
+        baseRequired: settings.required,
+        bombChance: settings.bombChance,
+        guardians: 0,
+        doomRampActive: false,
+        miniBombs: 0,
+        pendingMiniBombExplosion: false,
+        gameOver: false,
+        win: false,
+        modifierHistory: []
+      };
+      negativeHeat = 0;
+
+      roundNumber = 0;
+      clearLog();
+      addLog(`New game started. Target: <strong>${state.required}</strong> reveals. Base bomb chance: <strong>${state.bombChance.toFixed(1)}%</strong>.`);
+      updateStats();
+      dealRound();
+    }
+
+    function checkWin() {
+      if (state.progress >= state.required) {
+        state.win = true;
+        state.gameOver = true;
+        roundActive = false;
+        enableCardPicking(false);
+        updateStats();
+        setMessage(`<strong class="success">You survived.</strong> You reached ${state.progress} / ${state.required} reveals and escaped the deck.`);
+        addLog(`<strong>You won.</strong> Final progress: ${state.progress} / ${state.required}.`);
+        showModal('You Survived', 'You reached the required number of reveals before the bomb took you.');
+        return true;
+      }
+      return false;
+    }
+
+    function applyDoomRampForNextRound() {
+      if (state.doomRampActive && !state.gameOver) {
+        state.bombChance = clamp(state.bombChance + 1, 0.5, 95);
+        negativeHeat = clamp(negativeHeat + 0.04, 0, 1);
+        addLog(`Doom Escalation increased bomb chance to <strong>${state.bombChance.toFixed(1)}%</strong> for the next round.`);
+      }
+    }
+
+    function loseGame(reason, modalReason) {
+      clearTimeout(autoNextTimer);
+      state.gameOver = true;
+      roundActive = false;
+      enableCardPicking(false);
+      updateStats();
+      setMessage(`<strong class="fail">${reason}</strong> Press Start / Restart to try again.`);
+      addLog(`<strong>Loss.</strong> ${reason}`);
+      showModal('YOU LOST', modalReason);
+    }
+
+    function resolveBomb(cardIndex) {
+      if (state.guardians > 0) {
+        state.guardians -= 1;
+        addModifierRecord('Guardian consumed', 'neutral');
+        negativeHeat = clamp(negativeHeat + 0.06, 0, 1);
+        addLog(`A <strong>Guardian</strong> blocked the bomb from tile ${cardIndex + 1}. Guardians left: <strong>${state.guardians}</strong>.`);
+        setMessage(`<strong class="warn">Guardian saved you.</strong> The bomb was blocked, but your run continues.`);
+        return false;
+      }
+      return true;
+    }
+
+    function scheduleNextRound() {
+      if (state.gameOver) return;
+      autoNextTimer = setTimeout(() => {
+        if (!state.gameOver) dealRound();
+      }, 3000);
+    }
+
+    function revealCards(chosenIndex) {
+      const otherIndex = chosenIndex === 0 ? 1 : 0;
+
+      cardEls[chosenIndex].classList.add('chosen');
+      cardEls[otherIndex].classList.add('not-chosen');
+
+      makeCardFace(currentCards[0], 0, chosenIndex);
+      makeCardFace(currentCards[1], 1, chosenIndex);
+
+      cardEls[0].classList.add('flipped');
+      cardEls[1].classList.add('flipped');
+      enableCardPicking(false);
+
+      const chosen = currentCards[chosenIndex];
+      const other = currentCards[otherIndex];
+
+      let roundSummary = [
+        `You picked <strong>${chosen.title}</strong>.`,
+        `The other tile was <strong>${other.title}</strong>.`
+      ];
+
+      let extraMessages = [];
+
+      if (chosen.type === 'bomb') {
+        if (resolveBomb(chosenIndex)) {
+          updateStats();
+          loseGame('You picked the bomb.', 'You revealed a bomb and had no Guardian to save you.')
+          return;
+        } else {
+          extraMessages.push('Your Guardian absorbed the bomb.');
+        }
+      } else {
+        state.progress += 1;
+        extraMessages.push('Your chosen tile counted as one safe reveal.');
+      }
+
+      if (other.type === 'bomb') {
+        extraMessages.push('You narrowly avoided a bomb on the other tile.');
+      }
+
+      if (chosen.type !== 'bomb') {
+        const chosenResult = chosen.apply();
+        if (chosenResult) extraMessages.push(chosenResult);
+
+        if (state.pendingMiniBombExplosion) {
+          updateStats();
+          loseGame('Your 3rd Mini Bomb detonated.', 'YOU LOST');
+          return;
+        }
+      }
+
+      if (other.type !== 'bomb' && other.type !== 'safe') {
+        extraMessages.push('The other tile was revealed for suspense only and did not apply its effect.');
+      }
+
+      updateStats();
+
+      if (checkWin()) return;
+
+      roundResolved = true;
+      roundActive = false;
+
+      setMessage(`
+        <strong class="warn">Round ${roundNumber} resolved.</strong><br>
+        ${roundSummary.join(' ')}<br>
+        ${extraMessages.join(' ')}<br>
+        <span class="muted">Next round begins automatically in 3 seconds...</span>
+      `);
+
+      addLog(`Round <strong>${roundNumber}</strong>: ${roundSummary.join(' ')} ${extraMessages.join(' ')}`);
+
+      applyDoomRampForNextRound();
+      updateStats();
+      scheduleNextRound();
+    }
+
+    function pickCard(index) {
+      if (!roundActive || roundResolved || state.gameOver) return;
+      roundActive = false;
+      revealCards(index);
+    }
+
+    cardEls.forEach((el, idx) => {
+      el.addEventListener('click', () => pickCard(idx));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pickCard(idx);
+        }
+      });
+    });
+
+    startBtn.addEventListener('click', startGame);
+    resetStatsBtn.addEventListener('click', resetLocalStats);
+    closeModalBtn.addEventListener('click', closeModal);
+
+    loadSiteBtn.addEventListener('click', () => loadEmbeddedSite(siteInput.value));
+    clearSiteBtn.addEventListener('click', clearEmbeddedSite);
+    siteInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadEmbeddedSite(siteInput.value);
+      }
+    });
+    presetSiteBtns.forEach(btn => {
+      btn.addEventListener('click', () => loadEmbeddedSite(btn.dataset.url));
+    });
+
+    [requiredInput, bombInput, negativeModifierInput, positiveModifierInput, maxPlusInput, bombDeltaInput].forEach(el => {
+      el.addEventListener('input', updateReadouts);
+    });
+
+    loadCounters();
+    visits += 1;
+    saveCounters();
+    updateReadouts();
+    updateCountersDisplay();
+
+    state = {
+      progress: 0,
+      required: parseInt(requiredInput.value, 10),
+      baseRequired: parseInt(requiredInput.value, 10),
+      bombChance: parseFloat(bombInput.value),
+      guardians: 0,
+      modifierHistory: []
+    };
+    updateStats();
+    addLog('Ready. Press <strong>Start / Restart</strong> to begin.');
+  </script>
+</body>
+</html>
